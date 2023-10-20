@@ -21,6 +21,8 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     initPeakFreqDial();
     initPeakGainDial();
     initPeakQualityDial();
+    init_lowCutSlopeMenu();
+    init_highCutSlopeMenu();
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (800, 400);
@@ -33,6 +35,11 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     peakFreq.setLookAndFeel(nullptr);
     peakGain.setLookAndFeel(nullptr);
     peakQuality.setLookAndFeel(nullptr);
+    
+    lowCutSlopeMenu.removeListener(this);
+    lowCutSlopeMenu.setLookAndFeel(nullptr);
+    highCutSlopeMenu.removeListener(this);
+    highCutSlopeMenu.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
@@ -105,6 +112,41 @@ void SimpleEQAudioProcessorEditor::initPeakQualityDial() {
     peakQualityLabel.attachToComponent(&peakQuality, false);
     peakQualityLabel.setJustificationType(juce::Justification::centred);
 }
+
+void SimpleEQAudioProcessorEditor::init_lowCutSlopeMenu()
+{
+    lowCutSlopeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(audioProcessor.apvts, "LowCut Slope", lowCutSlopeMenu);
+    addAndMakeVisible(lowCutSlopeMenu);
+    lowCutSlopeMenu.addItem("Slope 12", 1);
+    lowCutSlopeMenu.addItem("Slope 24", 2);
+    lowCutSlopeMenu.addItem("Slope 36", 3);
+    lowCutSlopeMenu.addItem("Slope 48", 4);
+    lowCutSlopeMenu.addListener(this);
+    lowCutSlopeMenu.setLookAndFeel(&lowCutSlopeMenuLAF);
+    
+}
+
+void SimpleEQAudioProcessorEditor::init_highCutSlopeMenu()
+{
+    highCutSlopeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(audioProcessor.apvts, "HighCut Slope", highCutSlopeMenu);
+    addAndMakeVisible(highCutSlopeMenu);
+    highCutSlopeMenu.addItem("Slope 12", 1);
+    highCutSlopeMenu.addItem("Slope 24", 2);
+    highCutSlopeMenu.addItem("Slope 36", 3);
+    highCutSlopeMenu.addItem("Slope 48", 4);
+    highCutSlopeMenu.addListener(this);
+    highCutSlopeMenu.setLookAndFeel(&highCutSlopeMenuLAF);
+}
+
+void SimpleEQAudioProcessorEditor::comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == &lowCutSlopeMenu)
+    {
+        int selectedID = lowCutSlopeMenu.getSelectedId();
+        //do something based on what was picked (ie assign parameter)
+        std::cout << selectedID << std::endl;
+    }
+}
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
@@ -115,29 +157,45 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 void SimpleEQAudioProcessorEditor::resized()
 {
     auto lcfLeftMargin = getWidth()*.03;
-    auto lcfTopMargin = getWidth()*.075;
+    auto lcfTopMargin = getHeight()*.6;
     auto lcfSize = getWidth()*.13;
     lowCutFreq.setBounds(lcfLeftMargin, lcfTopMargin, lcfSize, lcfSize);
     
     auto hcfLeftMargin = getWidth()*.97 - getWidth()*.13;
-    auto hcfTopMargin = getWidth()*.075;
+    auto hcfTopMargin = getHeight()*.6;
     auto hcfSize = getWidth()*.13;
     highCutFreq.setBounds(hcfLeftMargin, hcfTopMargin, hcfSize, hcfSize);
     
     auto peakFreqLeftMargin = getWidth()*.5 - getWidth()*.13/2;
-    auto peakFreqTopMargin = getWidth()*.075;
+    auto peakFreqTopMargin = getHeight()*.6;
     auto peakFreqSize = getWidth()*.13;
     peakFreq.setBounds(peakFreqLeftMargin, peakFreqTopMargin, peakFreqSize, peakFreqSize);
     
     auto peakGainLeftMargin = getWidth()*.33 - getWidth()*.1/2;
-    auto peakGainTopMargin = getWidth()*.075 + getWidth()*.13 - getWidth()*.1;
+    auto peakGainTopMargin = getHeight()*.6 + getWidth()*.13 - getWidth()*.1;
     auto peakGainSize = getWidth()*.1;
     peakGain.setBounds(peakGainLeftMargin, peakGainTopMargin, peakGainSize, peakGainSize);
     
     auto peakQualityLeftMargin = getWidth()*.66 - getWidth()*.1/2;
-    auto peakQualityTopMargin = getWidth()*.075 + getWidth()*.13 - getWidth()*.1;
+    auto peakQualityTopMargin = getHeight()*.6 + getWidth()*.13 - getWidth()*.1;
     auto peakQualitySize = getWidth()*.1;
     peakQuality.setBounds(peakQualityLeftMargin, peakQualityTopMargin, peakQualitySize, peakQualitySize);
+    
+    //=====ComboBox======
+    //lowCutSlopeMenu
+    auto lowCut_leftMargin = getWidth() * 0.038;
+    auto lowCut_topMargin = getHeight() * 0.88;
+    auto lowCut_sizeX = getWidth() * 0.115;
+    auto lowCut_sizeY = getHeight() * 0.05;
+    lowCutSlopeMenu.setBounds(lowCut_leftMargin, lowCut_topMargin, lowCut_sizeX, lowCut_sizeY);
+    
+    //highCutSlopeMenu
+    auto highCut_leftMargin = getWidth() * 0.962 - getWidth() * 0.115;
+    auto highCut_topMargin = getHeight() * 0.88;
+    auto highCut_sizeX = getWidth() * 0.115;
+    auto highCut_sizeY = getHeight() * 0.05;
+    highCutSlopeMenu.setBounds(highCut_leftMargin, highCut_topMargin, highCut_sizeX, highCut_sizeY);
+    
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 }

@@ -314,7 +314,6 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState& apvts)
     ChainSettings chainSettings;
     chainSettings.peakFreq = apvts.getRawParameterValue("Peak Freq")->load();
     chainSettings.peakGainDb = apvts.getRawParameterValue("Peak Gain")->load();
-    std::cout << apvts.getRawParameterValue("Peak Gain")->load() << std::endl;
     chainSettings.peakQuality = apvts.getRawParameterValue("Peak Quality")->load();
     
     chainSettings.lowCutFreq = apvts.getRawParameterValue("LowCut Freq")->load();
