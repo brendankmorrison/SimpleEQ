@@ -80,6 +80,9 @@ public:
     
     template<typename ChainType, typename CoefficientType>
     void updateCoefficients(ChainType& chain, CoefficientType& coefficients, int slope);
+    
+    //Historgam Variables
+    std::atomic<float> mAmplitude;
 
 private:
     //==============================================================================
@@ -98,6 +101,11 @@ private:
     };
     
     using Coefficients = Filter::CoefficientsPtr;
+    
+    //Historgam Variables
+    float mMaxPeak = 0.0;
+    int mSampleCounter = 0;
+    int mDetectionLength = 256;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessor)
 };

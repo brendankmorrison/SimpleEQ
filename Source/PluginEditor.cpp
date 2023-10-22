@@ -13,6 +13,7 @@
 SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
+    Timer::startTimerHz(120);
     setResizable(true, true);
     setResizeLimits(400, 200, 1000, 600);
     getConstrainer()->setFixedAspectRatio(2);
@@ -40,6 +41,8 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     lowCutSlopeMenu.setLookAndFeel(nullptr);
     highCutSlopeMenu.removeListener(this);
     highCutSlopeMenu.setLookAndFeel(nullptr);
+    
+    Timer::stopTimer();
 }
 
 //==============================================================================
@@ -55,6 +58,7 @@ void SimpleEQAudioProcessorEditor::initLCFDial() {
     lowCutFreqLabel.setText("Low Cut Freq", juce::dontSendNotification);
     lowCutFreqLabel.attachToComponent(&lowCutFreq, false);
     lowCutFreqLabel.setJustificationType(juce::Justification::centred);
+    //lowCutFreqVal.setText(dynamic_cast<juce::String>(audioProcessor.apvts.getRawParameterValue("LowCut Freq")), juce::NotificationType::dontSendNotification);
 }
 
 void SimpleEQAudioProcessorEditor::initHCFDial() {
@@ -147,10 +151,33 @@ void SimpleEQAudioProcessorEditor::comboBoxChanged(juce::ComboBox *comboBoxThatH
         std::cout << selectedID << std::endl;
     }
 }
+
+void SimpleEQAudioProcessorEditor::timerCallback()
+{
+    repaint();
+}
+
+void SimpleEQAudioProcessorEditor::paintHistogram(juce::Graphics &g)
+{
+    //painting the histogram
+    int ampHeight = static_cast<int>(audioProcessor.mAmplitude * 100);
+    for (int i = 0; i < 499; i++)
+    {
+        rectArray[i] = rectArray[i + 1];
+    }
+    rectArray[499] = ampHeight;
+    for (int i = 0; i < 500; i++)
+    {
+        g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85).darker(0.1f));
+        g.fillRect(i + 150, 150 - rectArray[i], 1, rectArray[i]);
+    }
+}
+
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll(juce::Colour::fromFloatRGBA(245.0, 247.0, 248.0, 0.8));
+    paintHistogram(g);
     
 }
 

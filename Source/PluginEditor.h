@@ -15,7 +15,7 @@
 //==============================================================================
 /**
 */
-class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::ComboBox::Listener
+class SimpleEQAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::ComboBox::Listener, public juce::Timer
 {
 public:
     SimpleEQAudioProcessorEditor (SimpleEQAudioProcessor&);
@@ -25,6 +25,8 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
+    void timerCallback() override;
+    void paintHistogram(juce::Graphics&);
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -34,9 +36,11 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
     
     CustomDial dialLAF;
+    int rectArray[500] = { 0 }; //for audio histogram
     
     juce::Slider lowCutFreq;
     juce::Label lowCutFreqLabel;
+    juce::Label lowCutFreqVal;
     void initLCFDial();
     
     juce::Slider highCutFreq;

@@ -278,6 +278,25 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+        
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            //building a little buffer of 256 samples, taking the highest peak of that buffer and assigning its value to mAmplitude
+            float singleSample = std::abs(buffer.getSample(channel, sample));
+            
+            if (singleSample > mMaxPeak)
+                mMaxPeak = singleSample;
+            
+            ++mSampleCounter;
+            
+            if (mSampleCounter == mDetectionLength)
+            {
+                mAmplitude = mMaxPeak;
+                mMaxPeak = 0.0;
+                mSampleCounter = 0;
+            }
+                
+        }
 
         // ..do something to the data...
     }
