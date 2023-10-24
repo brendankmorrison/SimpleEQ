@@ -154,6 +154,7 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = 1;
     spec.sampleRate = sampleRate;
+    std::cout << sampleRate << std::endl;
     
     leftChannel.prepare(spec);
     rightChannel.prepare(spec);

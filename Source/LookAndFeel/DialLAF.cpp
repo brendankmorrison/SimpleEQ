@@ -60,6 +60,12 @@ void CustomDial::drawRotarySlider(juce::Graphics &g, int x, int y, int width, in
     dialTick.addRectangle(0, -radius + 6, 3.0f, radius * 0.6);
     g.fillPath(dialTick, juce::AffineTransform::rotation(angle).translated(centerX, centerY));
     
+    shadowProperties.radius = 30;
+    shadowProperties.offset = juce::Point<int>(-1, 4);
+    shadowProperties.colour = juce::Colours::black.withAlpha(0.5f);
+    dialShadow.setShadowProperties(shadowProperties);
+    slider.setComponentEffect(&dialShadow);
+    
     
 }
 

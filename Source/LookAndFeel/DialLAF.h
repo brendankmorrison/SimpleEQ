@@ -28,4 +28,9 @@ public:
                                             const bool hasSubMenu, const juce::String& text,
                                             const juce::String& shortcutKeyText,
                             const juce::Drawable* icon, const juce::Colour* const textColourToUse) override;
+    
+private:
+    //SHADOW
+    juce::DropShadow shadowProperties;
+    juce::DropShadowEffect dialShadow;
 };

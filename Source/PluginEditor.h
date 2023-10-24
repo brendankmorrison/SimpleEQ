@@ -69,6 +69,9 @@ private:
     void init_highCutSlopeMenu();
     CustomDial highCutSlopeMenuLAF;
     
+    //FFT Fundamental Freq Box
+    void init_freqBox(juce::Graphics& g);
+    
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lowCutFreqAttatchment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> highCutFreqAttatchment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> peakFreqAttatchment;

@@ -142,6 +142,40 @@ void SimpleEQAudioProcessorEditor::init_highCutSlopeMenu()
     highCutSlopeMenu.setLookAndFeel(&highCutSlopeMenuLAF);
 }
 
+void SimpleEQAudioProcessorEditor::init_freqBox(juce::Graphics& g)
+{
+    //Main box
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    int boxX = 100;
+    int boxY = 30;
+    int boxW = 600;
+    int boxH = 175;
+    g.fillRect(boxX, boxY, boxW, boxH);
+    
+    //Outline
+    g.setColour(juce::Colour::fromFloatRGBA(0.28, 0.37, 0.34, 0.9)); //green
+    juce::Rectangle<int> outline(boxX, boxY, boxW, boxH);
+    g.drawRect(outline, 4);
+//    g.setColour(juce::Colours::black.withAlpha(0.3f)); // Set shadow color with alpha (transparency).
+//    juce::Rectangle<int> shadowRectangle = outline.translated(2, 2); // Offset the shadow slightly.
+//    g.fillRect(shadowRectangle);
+    
+    //Graph
+    int startX = boxX + 100;
+    int startY = boxY + (boxH / 2);
+    int endX = boxW - 100;
+    int endY = startY;
+//    for (int i = 0; i < 5; ++i)
+//    {
+//        g.setColour(juce::Colours::grey); // Set the line color.
+//
+//        juce::Point<int> startPoint(100, 100); // Define the starting point.
+//        juce::Point<int> endPoint(300, 300); // Define the ending point.
+//
+//        g.drawLine(startPoint.getX(), startPoint.getY(), endPoint.getX(), endPoint.getY(), 2);
+//    }
+}
+
 void SimpleEQAudioProcessorEditor::comboBoxChanged(juce::ComboBox *comboBoxThatHasChanged)
 {
     if (comboBoxThatHasChanged == &lowCutSlopeMenu)
@@ -209,17 +243,19 @@ void SimpleEQAudioProcessorEditor::drawFrame (juce::Graphics& g)
     {
         for (int i = 1; i < audioProcessor.scopeSize; ++i)
         {
-            auto width  = 600;
-            auto height = 200;
-            auto xOffset = 100;
+            auto width  = 592;
+            auto height = 160;
+            auto xOffset = 104;
+            auto yOffset = 15;
  
             //g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85).darker(0.1f));
-            g.setColour(juce::Colours::black);
+            //g.setColour(juce::Colours::black);
+            g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85)); //yellow
             
             g.drawLine ({ (float) juce::jmap (i - 1, 0, audioProcessor.scopeSize - 1, 0, width) + xOffset,
-                                  juce::jmap (audioProcessor.scopeData[i - 1], 0.0f, 1.0f, (float) height, 0.0f),
+                                  juce::jmap (audioProcessor.scopeData[i - 1], 0.0f, 1.0f, (float) height, 0.0f) + yOffset,
                           (float) juce::jmap (i,     0, audioProcessor.scopeSize - 1, 0, width)+ xOffset,
-                                  juce::jmap (audioProcessor.scopeData[i],     0.0f, 1.0f, (float) height, 0.0f) });
+                                  juce::jmap (audioProcessor.scopeData[i],     0.0f, 1.0f, (float) height, 0.0f) + yOffset});
         }
     }
 
@@ -227,6 +263,7 @@ void SimpleEQAudioProcessorEditor::drawFrame (juce::Graphics& g)
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll(juce::Colour::fromFloatRGBA(245.0, 247.0, 248.0, 0.8));
+    init_freqBox(g);
     drawFrame(g);
 }
 
