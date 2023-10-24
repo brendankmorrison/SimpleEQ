@@ -16,7 +16,7 @@ SimpleEQAudioProcessorEditor::SimpleEQAudioProcessorEditor (SimpleEQAudioProcess
     Timer::startTimerHz(120);
     setResizable(true, true);
     setResizeLimits(400, 200, 1000, 600);
-    getConstrainer()->setFixedAspectRatio(2);
+    //getConstrainer()->setFixedAspectRatio(2);
     initLCFDial();
     initHCFDial();
     initPeakFreqDial();
@@ -154,31 +154,80 @@ void SimpleEQAudioProcessorEditor::comboBoxChanged(juce::ComboBox *comboBoxThatH
 
 void SimpleEQAudioProcessorEditor::timerCallback()
 {
-    repaint();
+    if (audioProcessor.nextFFTBlockReady)
+    {
+        paintHistogram();
+        audioProcessor.nextFFTBlockReady = false;
+        repaint();
+    }
 }
 
-void SimpleEQAudioProcessorEditor::paintHistogram(juce::Graphics &g)
+void SimpleEQAudioProcessorEditor::paintHistogram()//juce::Graphics &g)
 {
-    //painting the histogram
-    int ampHeight = static_cast<int>(audioProcessor.mAmplitude * 100);
-    for (int i = 0; i < 499; i++)
+    // first apply a windowing function to our data
+    audioProcessor.window.multiplyWithWindowingTable (audioProcessor.fftData, audioProcessor.fftSize);       // [1]
+
+    // then render our FFT data..
+    audioProcessor.forwardFFT.performFrequencyOnlyForwardTransform (audioProcessor.fftData);  // [2]
+
+    auto mindB = -100.0f;
+    auto maxdB =    0.0f;
+
+    for (int i = 0; i < audioProcessor.scopeSize; ++i)                         // [3]
     {
-        rectArray[i] = rectArray[i + 1];
+        auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - (float) i / (float) audioProcessor.scopeSize) * 0.2f);
+        auto fftDataIndex = juce::jlimit (0, audioProcessor.fftSize / 2, (int) (skewedProportionX * (float) audioProcessor.fftSize * 0.5f));
+        auto level = juce::jmap (juce::jlimit (mindB, maxdB, juce::Decibels::gainToDecibels (audioProcessor.fftData[fftDataIndex])
+                                                           - juce::Decibels::gainToDecibels ((float) audioProcessor.fftSize)),
+                                 mindB, maxdB, 0.0f, 1.0f);
+
+        audioProcessor.scopeData[i] = level;                                   // [4]
     }
-    rectArray[499] = ampHeight;
-    for (int i = 0; i < 500; i++)
-    {
-        g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85).darker(0.1f));
-        g.fillRect(i + 150, 150 - rectArray[i], 1, rectArray[i]);
-    }
+    
+//    for (int i = 0; i < 1024; i++)
+//    {
+//        int val = (int)audioProcessor.magnitude[i];
+//        if (val < -20)
+//        {
+//            audioProcessor.magnitude[i] = -20.f;
+//        }
+//        rectArray[i] = (int)audioProcessor.magnitude[i];
+//    }
+////    rectArray[512] = ampHeight;
+//
+//    for (int i = 0; i < 1025; i++)
+//    {
+//        if (rectArray[i] > -20)
+//        {
+//            g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85).darker(0.1f));
+//            g.fillRect(i + 100, 150 + 20 + rectArray[i], 5, 20 + rectArray[i]);
+//        }
+//    }
 }
+
+void SimpleEQAudioProcessorEditor::drawFrame (juce::Graphics& g)
+    {
+        for (int i = 1; i < audioProcessor.scopeSize; ++i)
+        {
+            auto width  = 600;
+            auto height = 200;
+            auto xOffset = 100;
+ 
+            //g.setColour(juce::Colour::fromFloatRGBA(0.96, 0.8, 0.08, 0.85).darker(0.1f));
+            g.setColour(juce::Colours::black);
+            
+            g.drawLine ({ (float) juce::jmap (i - 1, 0, audioProcessor.scopeSize - 1, 0, width) + xOffset,
+                                  juce::jmap (audioProcessor.scopeData[i - 1], 0.0f, 1.0f, (float) height, 0.0f),
+                          (float) juce::jmap (i,     0, audioProcessor.scopeSize - 1, 0, width)+ xOffset,
+                                  juce::jmap (audioProcessor.scopeData[i],     0.0f, 1.0f, (float) height, 0.0f) });
+        }
+    }
 
 //==============================================================================
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll(juce::Colour::fromFloatRGBA(245.0, 247.0, 248.0, 0.8));
-    paintHistogram(g);
-    
+    drawFrame(g);
 }
 
 void SimpleEQAudioProcessorEditor::resized()

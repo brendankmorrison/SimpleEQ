@@ -26,7 +26,8 @@ public:
     void resized() override;
     void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     void timerCallback() override;
-    void paintHistogram(juce::Graphics&);
+    void paintHistogram();//juce::Graphics&);
+    void drawFrame(juce::Graphics&);
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -36,7 +37,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
     
     CustomDial dialLAF;
-    int rectArray[500] = { 0 }; //for audio histogram
+    int rectArray[1025] = { 0 }; //for audio histogram
     
     juce::Slider lowCutFreq;
     juce::Label lowCutFreqLabel;

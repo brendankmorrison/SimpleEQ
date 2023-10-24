@@ -19,13 +19,16 @@ SimpleEQAudioProcessor::SimpleEQAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), apvts(*this, nullptr, "Parameters", createParameterLayout())
+                       ), apvts(*this, nullptr, "Parameters", createParameterLayout()), forwardFFT(fftOrder), window(fftSize, juce::dsp::WindowingFunction<float>::hann)
+                        
 #endif
 {
+    //CircularBuffer = juce::AudioBuffer<float>(getTotalNumInputChannels(), 1024);
 }
 
 SimpleEQAudioProcessor::~SimpleEQAudioProcessor()
 {
+    //fft = std::make_unique<juce::dsp::FFT>(8);
 }
 
 //==============================================================================
@@ -93,53 +96,53 @@ void SimpleEQAudioProcessor::changeProgramName (int index, const juce::String& n
 template<typename ChainType, typename CoefficientType>
 void SimpleEQAudioProcessor::updateCoefficients(ChainType& chain, CoefficientType& coefficients, int slope)
 {
-//        chain.template setBypassed<0>(true);
-//        chain.template setBypassed<1>(true);
-//        chain.template setBypassed<2>(true);
-//        chain.template setBypassed<3>(true);
+        chain.template setBypassed<0>(true);
+        chain.template setBypassed<1>(true);
+        chain.template setBypassed<2>(true);
+        chain.template setBypassed<3>(true);
     
-        *chain.template get<0>().coefficients = *coefficients[0];
-//        chain.template setBypassed<0>(false);
+        //*chain.template get<0>().coefficients = *coefficients[0];
+        chain.template setBypassed<0>(false);
 
-//        switch (slope)
-//        {
-//            case Slope_12:
-//            {
-//                *chain.template get<0>().coefficients = *coefficients[0];
-//                chain.template setBypassed<0>(false);
-//                break;
-//            }
-//            case Slope_24:
-//            {
-//                *chain.template get<0>().coefficients = *coefficients[0];
-//                chain.template setBypassed<0>(false);
-//                *chain.template get<1>().coefficients = *coefficients[1];
-//                chain.template setBypassed<1>(false);
-//                break;
-//            }
-//            case Slope_36:
-//            {
-//                *chain.template get<0>().coefficients = *coefficients[0];
-//                chain.template setBypassed<0>(false);
-//                *chain.template get<1>().coefficients = *coefficients[1];
-//                chain.template setBypassed<1>(false);
-//                *chain.template get<2>().coefficients = *coefficients[2];
-//                chain.template setBypassed<2>(false);
-//                break;
-//            }
-//            case Slope_48:
-//            {
-//                *chain.template get<0>().coefficients = *coefficients[0];
-//                chain.template setBypassed<0>(false);
-//                *chain.template get<1>().coefficients = *coefficients[1];
-//                chain.template setBypassed<1>(false);
-//                *chain.template get<2>().coefficients = *coefficients[2];
-//                chain.template setBypassed<2>(false);
-//                *chain.template get<3>().coefficients = *coefficients[3];
-//                chain.template setBypassed<3>(false);
-//                break;
-//            }
-//        }
+        switch (slope)
+        {
+            case Slope_12:
+            {
+                *chain.template get<0>().coefficients = *coefficients[0];
+                chain.template setBypassed<0>(false);
+                break;
+            }
+            case Slope_24:
+            {
+                *chain.template get<0>().coefficients = *coefficients[0];
+                chain.template setBypassed<0>(false);
+                *chain.template get<1>().coefficients = *coefficients[1];
+                chain.template setBypassed<1>(false);
+                break;
+            }
+            case Slope_36:
+            {
+                *chain.template get<0>().coefficients = *coefficients[0];
+                chain.template setBypassed<0>(false);
+                *chain.template get<1>().coefficients = *coefficients[1];
+                chain.template setBypassed<1>(false);
+                *chain.template get<2>().coefficients = *coefficients[2];
+                chain.template setBypassed<2>(false);
+                break;
+            }
+            case Slope_48:
+            {
+                *chain.template get<0>().coefficients = *coefficients[0];
+                chain.template setBypassed<0>(false);
+                *chain.template get<1>().coefficients = *coefficients[1];
+                chain.template setBypassed<1>(false);
+                *chain.template get<2>().coefficients = *coefficients[2];
+                chain.template setBypassed<2>(false);
+                *chain.template get<3>().coefficients = *coefficients[3];
+                chain.template setBypassed<3>(false);
+                break;
+            }
+        }
     }
 
 //==============================================================================
@@ -182,6 +185,25 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     updateCoefficients(leftHighCut, highCutCoefficients, chainSettings.highCutSlope);
     updateCoefficients(rightHighCut, highCutCoefficients, chainSettings.highCutSlope);
 }
+
+void SimpleEQAudioProcessor::pushNextSampleIntoFifo (float sample) noexcept
+    {
+        // if the fifo contains enough data, set a flag to say
+        // that the next frame should now be rendered..
+        if (fifoIndex == fftSize)               // [11]
+        {
+            if (! nextFFTBlockReady)            // [12]
+            {
+                juce::zeromem (fftData, sizeof (fftData));
+                memcpy (fftData, fifo, sizeof (fifo));
+                nextFFTBlockReady = true;
+            }
+ 
+            fifoIndex = 0;
+        }
+ 
+        fifo[fifoIndex++] = sample;             // [12]
+    }
 
 void SimpleEQAudioProcessor::releaseResources()
 {
@@ -278,9 +300,16 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+
+        
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
+            if(channel == 0)
+            {
+                pushNextSampleIntoFifo(channelData[sample]);
+            }
+            
             //building a little buffer of 256 samples, taking the highest peak of that buffer and assigning its value to mAmplitude
             float singleSample = std::abs(buffer.getSample(channel, sample));
             

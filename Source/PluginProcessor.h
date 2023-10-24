@@ -83,6 +83,29 @@ public:
     
     //Historgam Variables
     std::atomic<float> mAmplitude;
+    
+//    juce::AudioBuffer<float> CircularBuffer;
+//
+//    int writePosition = 0;
+//
+//    float fftBuffer[1024];
+//
+//    float magnitude[1025];
+    
+    void pushNextSampleIntoFifo (float sample) noexcept;
+    
+    const static int fftOrder  = 11;       // [1]
+    const static int fftSize   = 1 << fftOrder;  // [2]
+    const static int scopeSize = 256;
+   
+    juce::dsp::FFT forwardFFT;                      // [4]
+    juce::dsp::WindowingFunction<float> window;     // [5]
+// 
+    float fifo [fftSize];                           // [6]
+    float fftData [2 * fftSize];                    // [7]
+    int fifoIndex = 0;                              // [8]
+    bool nextFFTBlockReady = false;                 // [9]
+    float scopeData [scopeSize];                    // [10]
 
 private:
     //==============================================================================
